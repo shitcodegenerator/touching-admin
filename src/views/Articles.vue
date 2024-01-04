@@ -2,8 +2,9 @@
 import { onMounted, reactive , ref} from 'vue';
 import { Plus } from '@element-plus/icons-vue'
 import axios from 'axios'
-import * as dayjs from 'dayjs'
-import ImageUploader from 'quill-image-uploader';
+import dayjs from 'dayjs'
+// import ImageUploader from 'quill-image-uploader';
+const ImageUploader = require('quill-image-uploader');
 
 
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
@@ -39,14 +40,18 @@ const rules = reactive<FormRules<RuleForm>>({
   ],
 })
 
+type Error = {
+  message: string
+}
+
 const submitForm = async (formEl: FormInstance | undefined) => {
   if (!formEl) return
-  await formEl.validate(async(valid, fields) => {
+  await formEl.validate(async(valid) => {
     if (!valid) return
       try {
         await axios.post('https://touching-backend.vercel.app/api/article', ruleForm.value)
-      } catch (err) {
-        ElMessage.error(err.message)
+      } catch (err: unknown) {
+        ElMessage.error((err as Error).message)
       }
   })
 }
@@ -105,7 +110,7 @@ onMounted(() => {getArticles()
         name: 'imageUploader',
         module: ImageUploader,
         options: {
-          upload: file => {
+          upload: (file: Blob) => {
             return new Promise((resolve, reject) => {
               const formData = new FormData();
               formData.append("image", file);

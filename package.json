@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@types/node": "^20.10.6",
     "@vueup/vue-quill": "^1.2.0",
     "add": "^2.0.6",
     "axios": "^1.6.3",
