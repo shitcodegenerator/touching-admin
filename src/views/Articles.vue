@@ -44,7 +44,7 @@ const submitForm = async (formEl: FormInstance | undefined) => {
   await formEl.validate(async(valid, fields) => {
     if (!valid) return
       try {
-        await axios.post('http://localhost:8888/api/article', ruleForm.value)
+        await axios.post('https://touching-backend.vercel.app/api/article', ruleForm.value)
       } catch (err) {
         ElMessage.error(err.message)
       }
@@ -68,12 +68,12 @@ const clear =() => {
 
 
 const getArticles = async () => {
-  const { data } = await axios.get('http://localhost:8888/api/articles')
+  const { data } = await axios.get('https://touching-backend.vercel.app/api/articles')
   articleList.value = data.data
   console.log(data)
 }
 const getCategories = async () => {
-  const { data } = await axios.get('http://localhost:8888/api/categories')
+  const { data } = await axios.get('https://touching-backend.vercel.app/api/categories')
   categoryList.value = data.data
   console.log(data)
 }
@@ -109,7 +109,7 @@ onMounted(() => {getArticles()
             return new Promise((resolve, reject) => {
               const formData = new FormData();
               formData.append("image", file);
-              axios.post('http://localhost:8888/api/uploadImage', formData)
+              axios.post('https://touching-backend.vercel.app/api/uploadImage', formData)
               .then(res => {
                 console.log(res)
                 resolve(res.data.data);

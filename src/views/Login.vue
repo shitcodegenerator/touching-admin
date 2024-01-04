@@ -9,7 +9,7 @@ const router = useRouter()
 
 const login = async() => {
   try {
-    const data = await axios.post('http://localhost:8888/api/auth/login/admin', ruleForm)
+    const data = await axios.post('https://touching-backend.vercel.app/api/auth/login/admin', ruleForm)
     localStorage.setItem('token', data.data.token)
     ElMessage.success('登入成功')
     router.push({name: 'home'})
