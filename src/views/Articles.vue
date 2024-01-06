@@ -3,8 +3,7 @@ import { onMounted, reactive , ref} from 'vue';
 import { Plus } from '@element-plus/icons-vue'
 import axios from 'axios'
 import dayjs from 'dayjs'
-// import ImageUploader from 'quill-image-uploader';
-const ImageUploader = require('quill-image-uploader');
+import ImageUploader from 'quill-image-uploader';
 
 
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
