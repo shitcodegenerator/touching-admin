@@ -26,7 +26,6 @@ const login = async() => {
 }
 
 
-
 interface RuleForm {
   username: string
   password: string
@@ -57,8 +56,6 @@ const submitForm = async (formEl: FormInstance | undefined) => {
     } 
   })
 }
-
-
 
 </script>
 

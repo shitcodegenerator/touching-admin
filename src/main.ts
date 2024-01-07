@@ -8,6 +8,7 @@ import Login from './views/Login.vue'
 import Articles from './views/Articles.vue'
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
+import { createPinia } from 'pinia'
 
 const routes = [
     { path: '/login', component: Login },
@@ -20,9 +21,13 @@ const routes = [
     routes, // `routes: routes` 的缩写
   })
 
+const pinia = createPinia()
 const app = createApp(App)
 
+
+
 app.component('QuillEditor', QuillEditor)
+app.use(pinia)
 app.use(router)
 app.use(ElementPlus)
 app.mount('#app')

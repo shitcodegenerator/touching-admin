@@ -1,11 +1,12 @@
 <script setup lang="ts">
-
+import { usePageStore } from './store/page';
+const page = usePageStore()
 
 </script>
 
 <template>
- <div class="min-h-screen bg-gray-200">
-  <div class="w-full max-w-screen-xl mx-auto pt-40">
+ <div class="min-h-screen bg-gray-200" v-loading="page.loading">
+  <div class="w-full max-w-screen-xl mx-auto pt-10">
     <router-view></router-view>
   </div>
  </div>
