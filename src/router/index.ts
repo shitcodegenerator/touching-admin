@@ -5,7 +5,8 @@ import Analytics from "../views/analytics/index.vue";
 
 const routes = [
   { path: "/login", component: Login, name: "login" },
-  { path: "/", component: Articles, name: "home" },
+  { path: "/", redirect: "/analytics" },
+  { path: "/articles", component: Articles, name: "articles" },
   { path: "/analytics", component: Analytics, name: "analytics" },
 ];
 

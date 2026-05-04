@@ -1,17 +1,19 @@
 <script setup lang="ts">
 import { usePageStore } from './store/page';
+import { useAuthStore } from './store/auth';
 import { useRouter, useRoute } from 'vue-router';
 import { computed } from 'vue';
 
 const page = usePageStore()
+const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
-const isLoggedIn = computed(() => !!localStorage.getItem('token'))
+const isLoggedIn = computed(() => !!auth.token)
 const isLoginPage = computed(() => route.path === '/login')
 
 const logout = () => {
-  localStorage.removeItem('token')
+  auth.clearToken()
   router.push('/login')
 }
 </script>
@@ -22,9 +24,9 @@ const logout = () => {
     <div class="w-full max-w-screen-xl mx-auto px-4 flex items-center justify-between h-14">
       <div class="flex items-center gap-1">
         <router-link
-          to="/"
+          to="/articles"
           class="px-4 py-2 rounded text-sm font-medium transition-colors"
-          :class="route.path === '/' ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100'"
+          :class="route.path === '/articles' ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100'"
         >
           文章列表
         </router-link>

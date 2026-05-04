@@ -59,6 +59,8 @@ export interface YAxisConfig {
 export interface ChartGroup {
   key: string;
   title: string;
+  /** 標題超連結，點擊標題可前往外部資料來源 */
+  link?: string;
   indicators: IndicatorConfig[];
   yAxis: YAxisConfig[];
   /** X 軸使用非日期標籤（如行政區名稱），跳過年月格式過濾 */
@@ -226,6 +228,7 @@ export const chartGroups: ChartGroup[] = [
   {
     key: "taipei-price",
     title: "台北市預售屋成交量與均價",
+    link: "https://docs.google.com/document/d/1VkvclL9oAzC7FRCNZmnbqN0SczYEgLGyY3Klcd2OSjY/edit?usp=sharing",
     indicators: [
       { dbIndex: 28, label: "台北市成交量(筆)", type: "bar", yAxisIndex: 0 },
       { dbIndex: 29, label: "台北市單坪均價(萬)", type: "line", yAxisIndex: 1 },

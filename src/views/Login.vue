@@ -4,8 +4,10 @@ import {ElMessage} from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import http from '../request/http'
 import { encryptPassword } from '../utils/crypto'
+import { useAuthStore } from '../store/auth'
 import { useRouter } from 'vue-router';
 const router = useRouter()
+const auth = useAuthStore()
 
 const loginLoading = ref(false)
 
@@ -18,9 +20,9 @@ const login = async() => {
       password: encryptedPwd,
       encrypted: true,
     })
-    localStorage.setItem('token', data.data.token)
+    auth.setToken(data.data.token)
     ElMessage.success('登入成功')
-    router.push({name: 'home'})
+    router.push({name: 'analytics'})
   } catch {
     // http interceptor 已處理錯誤訊息
   } finally {

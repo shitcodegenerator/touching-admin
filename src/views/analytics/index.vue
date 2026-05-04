@@ -10,7 +10,14 @@
         class="mb-6"
       >
         <template #header>
-          <span class="font-bold">{{ group.title }}</span>
+          <a
+            v-if="group.link"
+            :href="group.link"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="font-bold text-blue-600 hover:underline"
+          >{{ group.title }}</a>
+          <span v-else class="font-bold">{{ group.title }}</span>
         </template>
         <DistrictEditTable
           v-if="group.isDistrictTimeSeries"

@@ -1,6 +1,7 @@
 import axios from "axios";
 import { ElMessage } from "element-plus";
 import router from "../router";
+import { useAuthStore } from "../store/auth";
 
 const http = axios.create({
   baseURL: "/proxyApi",
@@ -9,9 +10,9 @@ const http = axios.create({
 
 // Request interceptor: 自動帶 token
 http.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  const auth = useAuthStore();
+  if (auth.token) {
+    config.headers.Authorization = `Bearer ${auth.token}`;
   }
   return config;
 });
@@ -21,7 +22,8 @@ http.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("token");
+      const auth = useAuthStore();
+      auth.clearToken();
       ElMessage.error("登入已過期，請重新登入");
       router.push("/login");
     } else if (error.response?.status >= 400) {
