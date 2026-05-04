@@ -12,9 +12,8 @@ interface Member {
   birthday: string;
   city: string;
   mobile: string;
-  gender: string;
   avatar: string;
-  subscribe: boolean;
+  visits: string[];
   created_at: string;
 }
 
@@ -50,11 +49,6 @@ const handleSizeChange = (size: number) => {
   getMembers();
 };
 
-const genderLabel = (val: string) => {
-  const map: Record<string, string> = { male: "男", female: "女", other: "其他" };
-  return map[val] ?? val ?? "-";
-};
-
 onMounted(() => {
   getMembers();
 });
@@ -87,23 +81,25 @@ onMounted(() => {
       <el-table-column prop="mobile" label="手機" min-width="130" show-overflow-tooltip />
       <el-table-column prop="city" label="城市" min-width="100" show-overflow-tooltip />
 
-      <el-table-column label="性別" width="80" align="center">
-        <template #default="{ row }">
-          {{ genderLabel(row.gender) }}
-        </template>
-      </el-table-column>
-
       <el-table-column label="生日" width="120" align="center">
         <template #default="{ row }">
           {{ row.birthday ? dayjs(row.birthday).format("YYYY-MM-DD") : "-" }}
         </template>
       </el-table-column>
 
-      <el-table-column label="訂閱" width="80" align="center">
+      <el-table-column label="造訪次數" width="100" align="center">
         <template #default="{ row }">
-          <el-tag :type="row.subscribe ? 'success' : 'info'" size="small">
-            {{ row.subscribe ? "是" : "否" }}
-          </el-tag>
+          <el-tooltip v-if="row.visits?.length" placement="top">
+            <template #content>
+              <div v-for="(v, i) in row.visits" :key="i">
+                {{ dayjs(v).format("YYYY-MM-DD HH:mm") }}
+              </div>
+            </template>
+            <span class="cursor-pointer underline decoration-dashed">
+              {{ row.visits.length }}
+            </span>
+          </el-tooltip>
+          <span v-else>0</span>
         </template>
       </el-table-column>
 
