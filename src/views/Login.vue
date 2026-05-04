@@ -9,7 +9,7 @@ const router = useRouter()
 const login = async() => {
   try {
     const { data } = await http.post('/auth/login/admin', ruleForm)
-    localStorage.setItem('token', data.token)
+    localStorage.setItem('token', data.data.token)
     ElMessage.success('登入成功')
     router.push({name: 'home'})
   } catch {
