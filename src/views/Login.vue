@@ -2,26 +2,18 @@
 import {  reactive , ref} from 'vue';
 import {ElMessage} from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import axios from 'axios'
+import http from '../request/http'
 import { useRouter } from 'vue-router';
 const router = useRouter()
 
-type Error = {
-  response: {
-    data: {
-      error: string
-    }
-  }
-}
-
 const login = async() => {
   try {
-    const data = await axios.post('https://touching-backend.vercel.app/api/auth/login/admin', ruleForm)
-    localStorage.setItem('token', data.data.token)
+    const { data } = await http.post('/auth/login/admin', ruleForm)
+    localStorage.setItem('token', data.token)
     ElMessage.success('登入成功')
     router.push({name: 'home'})
-  } catch (err: unknown) {
-    ElMessage.error((err as Error).response?.data.error ?? '錯誤')
+  } catch {
+    // http interceptor 已處理錯誤訊息
   }
 }
 
