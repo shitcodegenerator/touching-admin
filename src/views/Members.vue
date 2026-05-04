@@ -13,7 +13,7 @@ interface Member {
   city: string;
   mobile: string;
   avatar: string;
-  visits: string[];
+  visits: { title: string; date: string; duration: number; url: string }[];
   created_at: string;
 }
 
@@ -91,8 +91,8 @@ onMounted(() => {
         <template #default="{ row }">
           <el-tooltip v-if="row.visits?.length" placement="top">
             <template #content>
-              <div v-for="(v, i) in row.visits" :key="i">
-                {{ dayjs(v).format("YYYY-MM-DD HH:mm") }}
+              <div v-for="(v, i) in row.visits" :key="i" class="whitespace-nowrap">
+                {{ dayjs(v.date).format("YYYY-MM-DD HH:mm") }} — {{ v.title }}
               </div>
             </template>
             <span class="cursor-pointer underline decoration-dashed">
