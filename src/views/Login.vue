@@ -3,17 +3,28 @@ import {  reactive , ref} from 'vue';
 import {ElMessage} from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import http from '../request/http'
+import { encryptPassword } from '../utils/crypto'
 import { useRouter } from 'vue-router';
 const router = useRouter()
 
+const loginLoading = ref(false)
+
 const login = async() => {
   try {
-    const { data } = await http.post('/auth/login/admin', ruleForm)
+    loginLoading.value = true
+    const encryptedPwd = await encryptPassword(ruleForm.password)
+    const { data } = await http.post('/auth/login/admin', {
+      username: ruleForm.username,
+      password: encryptedPwd,
+      encrypted: true,
+    })
     localStorage.setItem('token', data.data.token)
     ElMessage.success('登入成功')
     router.push({name: 'home'})
   } catch {
     // http interceptor 已處理錯誤訊息
+  } finally {
+    loginLoading.value = false
   }
 }
 
