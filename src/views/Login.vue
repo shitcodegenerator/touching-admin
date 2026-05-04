@@ -83,7 +83,7 @@ const submitForm = async (formEl: FormInstance | undefined) => {
     </el-form-item>
 
 
-      <el-button type="primary" class="mx-auto w-full h-10" @click="submitForm(ruleFormRef)">
+      <el-button type="primary" class="mx-auto w-full h-10" :loading="loginLoading" @click="submitForm(ruleFormRef)">
         登入
       </el-button>
      
