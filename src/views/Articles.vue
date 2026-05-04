@@ -23,6 +23,7 @@ interface FormData {
   categoryId: string;
   image: string;
   type: string;
+  keyword: string;
   _id?: string;
   id?: string;
 }
@@ -39,6 +40,7 @@ const formData = ref<FormData>({
   image: "2",
   type: "news",
   summary: "",
+  keyword: "",
 });
 
 const categoryList = ref<
@@ -215,6 +217,15 @@ const onUpload = async (file: UploadFile) => {
       </el-form-item>
       <el-form-item label="標題" prop="title">
         <el-input v-model="formData.title" />
+      </el-form-item>
+
+      <el-form-item label="關鍵字" prop="keyword">
+        <el-input
+          v-model="formData.keyword"
+          maxlength="15"
+          placeholder="請輸入 8-12 字精簡標題（用於卡片標題圖）"
+          show-word-limit
+        />
       </el-form-item>
 
       <el-form-item label="標籤" prop="categoryId">
