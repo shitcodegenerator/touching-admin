@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, computed } from "vue";
+import { onMounted, ref } from "vue";
 import http from "../request/http";
 import dayjs from "dayjs";
 import { usePageStore } from "../store/page";
