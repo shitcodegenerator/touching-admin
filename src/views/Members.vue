@@ -36,6 +36,14 @@ const currentPage = ref(1);
 const pageSize = ref(20);
 const currentSort = ref("-created_at");
 
+const visitDialogVisible = ref(false);
+const visitDialogMember = ref<Member | null>(null);
+
+const openVisitDialog = (row: Member) => {
+  visitDialogMember.value = row;
+  visitDialogVisible.value = true;
+};
+
 const getMembers = async () => {
   setLoading(true);
   const { data } = await http.get("/members", {
@@ -122,16 +130,13 @@ onMounted(() => {
 
       <el-table-column label="造訪次數" width="100" align="center">
         <template #default="{ row }">
-          <el-tooltip v-if="row.visits?.length" placement="top">
-            <template #content>
-              <div v-for="(v, i) in row.visits" :key="i" class="whitespace-nowrap">
-                {{ dayjs(v.date).format("YYYY-MM-DD HH:mm") }} — {{ v.title }}
-              </div>
-            </template>
-            <span class="cursor-pointer underline decoration-dashed">
-              {{ row.visits.length }}
-            </span>
-          </el-tooltip>
+          <span
+            v-if="row.visits?.length"
+            class="cursor-pointer underline decoration-dashed text-blue-600"
+            @click="openVisitDialog(row)"
+          >
+            {{ row.visits.length }}
+          </span>
           <span v-else>0</span>
         </template>
       </el-table-column>
@@ -160,5 +165,28 @@ onMounted(() => {
         @size-change="handleSizeChange"
       />
     </div>
+
+    <el-dialog
+      v-model="visitDialogVisible"
+      :title="`${visitDialogMember?.name || visitDialogMember?.username || ''} 的造訪紀錄（共 ${visitDialogMember?.visits?.length ?? 0} 次）`"
+      width="600px"
+      destroy-on-close
+    >
+      <div class="max-h-[60vh] overflow-y-auto">
+        <el-table :data="visitDialogMember?.visits ?? []" stripe>
+          <el-table-column label="#" width="60" align="center">
+            <template #default="{ $index }">{{ $index + 1 }}</template>
+          </el-table-column>
+          <el-table-column label="時間" width="170" align="center">
+            <template #default="{ row }">
+              {{ dayjs(row.date).format("YYYY-MM-DD HH:mm") }}
+            </template>
+          </el-table-column>
+          <el-table-column label="標題" min-width="200" show-overflow-tooltip>
+            <template #default="{ row }">{{ row.title }}</template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </el-dialog>
   </div>
 </template>
