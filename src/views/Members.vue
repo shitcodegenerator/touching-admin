@@ -15,7 +15,18 @@ interface Member {
   avatar: string;
   visits: { title: string; date: string; duration: number; url: string }[];
   created_at: string;
+  lastVisitAt: string | null;
+  visitCount: number;
 }
+
+const sortOptions = [
+  { label: "加入時間（新→舊）", value: "-created_at" },
+  { label: "加入時間（舊→新）", value: "created_at" },
+  { label: "最後訪問時間（新→舊）", value: "-lastVisitAt" },
+  { label: "最後訪問時間（舊→新）", value: "lastVisitAt" },
+  { label: "訪問次數（多→少）", value: "-visitCount" },
+  { label: "訪問次數（少→多）", value: "visitCount" },
+] as const;
 
 const { setLoading } = usePageStore();
 
@@ -23,6 +34,7 @@ const memberList = ref<Member[]>([]);
 const total = ref(0);
 const currentPage = ref(1);
 const pageSize = ref(20);
+const currentSort = ref("-created_at");
 
 const getMembers = async () => {
   setLoading(true);
@@ -30,7 +42,7 @@ const getMembers = async () => {
     params: {
       page: currentPage.value,
       limit: pageSize.value,
-      sort: "-created_at",
+      sort: currentSort.value,
     },
   });
   memberList.value = data.data ?? [];
@@ -49,6 +61,12 @@ const handleSizeChange = (size: number) => {
   getMembers();
 };
 
+const handleSortChange = (val: string) => {
+  currentSort.value = val;
+  currentPage.value = 1;
+  getMembers();
+};
+
 onMounted(() => {
   getMembers();
 });
@@ -58,7 +76,22 @@ onMounted(() => {
   <div>
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-xl font-bold text-gray-800">會員列表</h2>
-      <span class="text-sm text-gray-500">共 {{ total }} 位會員</span>
+      <div class="flex items-center gap-3">
+        <el-select
+          :model-value="currentSort"
+          placeholder="排序方式"
+          style="width: 220px"
+          @change="handleSortChange"
+        >
+          <el-option
+            v-for="opt in sortOptions"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </el-select>
+        <span class="text-sm text-gray-500">共 {{ total }} 位會員</span>
+      </div>
     </div>
 
     <el-table :data="memberList" stripe class="w-full" empty-text="暫無會員資料">
@@ -100,6 +133,12 @@ onMounted(() => {
             </span>
           </el-tooltip>
           <span v-else>0</span>
+        </template>
+      </el-table-column>
+
+      <el-table-column label="最後訪問" width="160" align="center">
+        <template #default="{ row }">
+          {{ row.lastVisitAt ? dayjs(row.lastVisitAt).format("YYYY-MM-DD HH:mm") : "-" }}
         </template>
       </el-table-column>
 
