@@ -3,6 +3,7 @@ import Login from "../views/Login.vue";
 import Articles from "../views/Articles.vue";
 import Analytics from "../views/analytics/index.vue";
 import Members from "../views/Members.vue";
+import LandPosts from "../views/LandPosts.vue";
 
 const routes = [
   { path: "/login", component: Login, name: "login" },
@@ -10,6 +11,7 @@ const routes = [
   { path: "/articles", component: Articles, name: "articles" },
   { path: "/analytics", component: Analytics, name: "analytics" },
   { path: "/members", component: Members, name: "members" },
+  { path: "/land-posts", component: LandPosts, name: "land-posts" },
 ];
 
 const router = createRouter({
