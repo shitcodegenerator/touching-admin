@@ -4,7 +4,7 @@ import router from "../router";
 import { useAuthStore } from "../store/auth";
 
 const http = axios.create({
-  baseURL: "/proxyApi",
+  baseURL: "https://touching-develop.zeabur.app/api",
   timeout: 30000,
 });
 
