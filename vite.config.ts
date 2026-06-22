@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/proxyApi': {
-        target: process.env.NODE_ENV === 'production' ? 'https://touching-backend.vercel.app/api' : 'http://localhost:3006/api',
+        target: process.env.NODE_ENV === 'production' ? 'https://touching-develop.zeabur.app/api' : 'http://localhost:3006/api',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace('/proxyApi', '')
