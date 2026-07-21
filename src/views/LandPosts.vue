@@ -285,6 +285,15 @@ const handleDelete = async (post: LandPost) => {
   }
 }
 
+// 下拉操作選單分派
+const handleAction = (cmd: string, row: LandPost) => {
+  if (cmd === 'detail') showDetail(row)
+  else if (cmd === 'reply') openReplyDialog(row)
+  else if (cmd === 'approve') openReviewDialog(row, 'approve')
+  else if (cmd === 'reject') openReviewDialog(row, 'reject')
+  else if (cmd === 'delete') handleDelete(row)
+}
+
 onMounted(fetchPosts)
 </script>
 
@@ -302,14 +311,25 @@ onMounted(fetchPosts)
     </div>
 
     <div class="bg-white rounded-lg shadow-sm p-6">
-      <el-table :data="posts" v-loading="loading" stripe>
-        <el-table-column label="類型" width="90">
+      <el-table
+        :data="posts"
+        v-loading="loading"
+        stripe
+        :header-cell-style="{
+          background: '#f1f5f9',
+          color: '#334155',
+          fontWeight: '600',
+          fontSize: '13px'
+        }"
+        :cell-style="{ padding: '12px 0' }"
+      >
+        <el-table-column label="類型" width="96">
           <template #default="{ row }">
-            {{ typeMap[row.type] || row.type }}
+            <el-tag size="small" effect="plain" round>{{ typeMap[row.type] || row.type }}</el-tag>
           </template>
         </el-table-column>
 
-        <el-table-column label="聯絡人" width="110">
+        <el-table-column label="聯絡人" width="100">
           <template #default="{ row }">
             <el-button link type="primary" @click="showMember(row)">
               {{ row.contactName }}
@@ -317,22 +337,24 @@ onMounted(fetchPosts)
           </template>
         </el-table-column>
 
-        <el-table-column label="位置" min-width="160">
+        <el-table-column label="位置" min-width="140">
           <template #default="{ row }">
-            {{ row.city }} {{ row.district }}
-            <span v-if="row.section" class="text-gray-500">{{ row.section }}</span>
+            <div class="text-gray-700">{{ row.city }} {{ row.district }}</div>
+            <div v-if="row.section" class="text-xs text-gray-400">{{ row.section }}</div>
           </template>
         </el-table-column>
 
-        <el-table-column label="說明" prop="description" min-width="200" show-overflow-tooltip />
+        <el-table-column label="說明" prop="description" min-width="180" show-overflow-tooltip />
 
-        <el-table-column label="可見度" width="120">
+        <el-table-column label="可見度" width="104">
           <template #default="{ row }">
-            {{ visibilityMap[row.visibility] || row.visibility }}
+            <span class="text-sm text-gray-600">
+              {{ visibilityMap[row.visibility] || row.visibility }}
+            </span>
           </template>
         </el-table-column>
 
-        <el-table-column label="狀態" width="130">
+        <el-table-column label="狀態" width="118">
           <template #default="{ row }">
             <div class="flex flex-col items-start gap-1">
               <el-tag :type="statusTagType(row.status)" size="small">
@@ -346,14 +368,12 @@ onMounted(fetchPosts)
               >
                 已重新編輯
               </el-tag>
-              <el-tag v-if="row.env === 'qat'" type="info" size="small" effect="plain">
-                QAT
-              </el-tag>
+              <el-tag v-if="row.env === 'qat'" type="info" size="small" effect="plain">QAT</el-tag>
             </div>
           </template>
         </el-table-column>
 
-        <el-table-column label="提交／最後編輯" width="170">
+        <el-table-column label="提交／最後編輯" width="156">
           <template #default="{ row }">
             <div class="text-xs text-gray-600">
               <div>提交：{{ fmt(row.createdAt) }}</div>
@@ -364,44 +384,30 @@ onMounted(fetchPosts)
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column label="操作" width="200" align="center">
           <template #default="{ row }">
-            <div class="flex flex-wrap gap-1">
-              <el-button size="small" @click="showDetail(row)">詳情</el-button>
-              <el-button
-                v-if="row.status === 'pending'"
-                size="small"
-                type="primary"
-                plain
-                @click="openReplyDialog(row)"
-              >
-                意見回覆
-              </el-button>
-              <el-button
-                v-if="row.status === 'pending'"
-                size="small"
-                type="success"
-                @click="openReviewDialog(row, 'approve')"
-              >
-                核准
-              </el-button>
-              <el-button
-                v-if="row.status === 'pending'"
-                size="small"
-                type="danger"
-                @click="openReviewDialog(row, 'reject')"
-              >
-                駁回
-              </el-button>
-              <el-button
-                v-if="row.status === 'approved' || row.status === 'rejected'"
-                size="small"
-                type="danger"
-                plain
-                @click="handleDelete(row)"
-              >
-                刪除
-              </el-button>
+            <div class="flex flex-nowrap items-center justify-center gap-1.5">
+              <template v-if="row.status === 'pending'">
+                <el-button size="small" type="success" @click="openReviewDialog(row, 'approve')">
+                  核准
+                </el-button>
+                <el-button size="small" type="danger" plain @click="openReviewDialog(row, 'reject')">
+                  駁回
+                </el-button>
+                <el-dropdown trigger="click" @command="(c: string) => handleAction(c, row)">
+                  <el-button size="small">更多<span class="ml-0.5">▾</span></el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="detail">詳情</el-dropdown-item>
+                      <el-dropdown-item command="reply">意見回覆</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </template>
+              <template v-else>
+                <el-button size="small" @click="showDetail(row)">詳情</el-button>
+                <el-button size="small" type="danger" plain @click="handleDelete(row)">刪除</el-button>
+              </template>
             </div>
           </template>
         </el-table-column>
