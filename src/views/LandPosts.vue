@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import dayjs from 'dayjs'
 import http from '../request/http'
@@ -284,8 +284,6 @@ const handleDelete = async (post: LandPost) => {
     // error handled by interceptor
   }
 }
-
-const detailMember = computed(() => memberOf(detailPost.value))
 
 onMounted(fetchPosts)
 </script>
