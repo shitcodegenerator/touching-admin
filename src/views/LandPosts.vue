@@ -185,20 +185,26 @@ const editedAfterReply = (post: LandPost) => {
 
 const fmt = (d?: string) => (d ? dayjs(d).format('YYYY-MM-DD HH:mm') : '-')
 
-const verificationLabel = (verified: boolean, label: string) =>
-  `${verified ? '已確認' : '未確認'}${label}`
+const verificationStateText = (verified: boolean) => (verified ? '已確認' : '未確認')
 
-const verificationSummary = (verification?: ReviewLog['after']) =>
-  `${verificationLabel(verification?.landNumberVerified ?? false, '地號')}、${verificationLabel(
-    verification?.authorizationLetterVerified ?? false,
-    '委託／授權書',
-  )}`
+const verificationChangeText = (log: ReviewLog) => {
+  const before = log.before ?? {
+    landNumberVerified: false,
+    authorizationLetterVerified: false,
+  }
+  const after = log.after ?? before
+
+  return [
+    `地號：${verificationStateText(before.landNumberVerified)} → ${verificationStateText(after.landNumberVerified)}`,
+    `委託／授權書：${verificationStateText(before.authorizationLetterVerified)} → ${verificationStateText(after.authorizationLetterVerified)}`,
+  ].join('；')
+}
 
 const reviewLogText = (log: ReviewLog) => {
-  if (log.action === 'approved') return `已核准案件，官方核實：${verificationSummary(log.after)}`
-  if (log.action === 'rejected') return '已駁回案件'
+  if (log.action === 'approved') return `已核准案件：${verificationChangeText(log)}`
+  if (log.action === 'rejected') return `已駁回案件：${verificationChangeText(log)}`
 
-  return `已更新官方核實標章：${verificationSummary(log.after)}`
+  return `已更新官方核實標章：${verificationChangeText(log)}`
 }
 
 const fetchPosts = async () => {
