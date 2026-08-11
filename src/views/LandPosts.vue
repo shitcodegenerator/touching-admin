@@ -18,6 +18,14 @@ interface ReviewReply {
   createdAt: string
 }
 
+interface ReviewLog {
+  action: 'approved' | 'rejected' | 'verification_updated'
+  operator: { userId: string; username: string }
+  before?: { landNumberVerified: boolean; authorizationLetterVerified: boolean }
+  after?: { landNumberVerified: boolean; authorizationLetterVerified: boolean }
+  createdAt: string
+}
+
 interface LandPost {
   _id: string
   type: string
@@ -51,6 +59,9 @@ interface LandPost {
   status: string
   reviewNote?: string
   reviewReplies?: ReviewReply[]
+  landNumberVerified?: boolean
+  authorizationLetterVerified?: boolean
+  reviewLogs?: ReviewLog[]
   env?: string
   userId?: Member | string | null
   createdAt: string
@@ -70,6 +81,12 @@ const reviewDialogVisible = ref(false)
 const reviewAction = ref<'approve' | 'reject'>('approve')
 const reviewNote = ref('')
 const reviewTarget = ref<LandPost | null>(null)
+const reviewLandNumberVerified = ref(false)
+const reviewAuthorizationLetterVerified = ref(false)
+
+// 已核准案件的官方核實標章編輯
+const verificationDialogVisible = ref(false)
+const verificationTarget = ref<LandPost | null>(null)
 
 // Reply dialog（意見回覆）
 const replyDialogVisible = ref(false)
@@ -168,6 +185,22 @@ const editedAfterReply = (post: LandPost) => {
 
 const fmt = (d?: string) => (d ? dayjs(d).format('YYYY-MM-DD HH:mm') : '-')
 
+const verificationLabel = (verified: boolean, label: string) =>
+  `${verified ? '已確認' : '未確認'}${label}`
+
+const verificationSummary = (verification?: ReviewLog['after']) =>
+  `${verificationLabel(verification?.landNumberVerified ?? false, '地號')}、${verificationLabel(
+    verification?.authorizationLetterVerified ?? false,
+    '委託／授權書',
+  )}`
+
+const reviewLogText = (log: ReviewLog) => {
+  if (log.action === 'approved') return `已核准案件，官方核實：${verificationSummary(log.after)}`
+  if (log.action === 'rejected') return '已駁回案件'
+
+  return `已更新官方核實標章：${verificationSummary(log.after)}`
+}
+
 const fetchPosts = async () => {
   loading.value = true
   try {
@@ -209,6 +242,10 @@ const openReviewDialog = (post: LandPost, action: 'approve' | 'reject') => {
   reviewTarget.value = post
   reviewAction.value = action
   reviewNote.value = ''
+  if (action === 'approve') {
+    reviewLandNumberVerified.value = false
+    reviewAuthorizationLetterVerified.value = false
+  }
   reviewDialogVisible.value = true
 }
 
@@ -222,11 +259,41 @@ const submitReview = async () => {
 
   try {
     const endpoint = reviewAction.value === 'approve' ? 'approve' : 'reject'
-    await http.patch(`/land-post/admin/${reviewTarget.value._id}/${endpoint}`, {
-      reviewNote: reviewNote.value || undefined,
-    })
+    const body =
+      reviewAction.value === 'approve'
+        ? {
+            reviewNote: reviewNote.value || undefined,
+            landNumberVerified: reviewLandNumberVerified.value,
+            authorizationLetterVerified: reviewAuthorizationLetterVerified.value,
+          }
+        : { reviewNote: reviewNote.value }
+    await http.patch(`/land-post/admin/${reviewTarget.value._id}/${endpoint}`, body)
     ElMessage.success(reviewAction.value === 'approve' ? '已核准' : '已駁回')
     reviewDialogVisible.value = false
+    fetchPosts()
+  } catch {
+    // error handled by interceptor
+  }
+}
+
+const openVerificationDialog = (post: LandPost) => {
+  verificationTarget.value = post
+  reviewLandNumberVerified.value = post.landNumberVerified ?? false
+  reviewAuthorizationLetterVerified.value = post.authorizationLetterVerified ?? false
+  verificationDialogVisible.value = true
+}
+
+const submitVerification = async () => {
+  if (!verificationTarget.value) return
+
+  try {
+    const res = await http.patch(`/land-post/admin/${verificationTarget.value._id}/verification`, {
+      landNumberVerified: reviewLandNumberVerified.value,
+      authorizationLetterVerified: reviewAuthorizationLetterVerified.value,
+    })
+    detailPost.value = res.data.data
+    verificationDialogVisible.value = false
+    ElMessage.success('官方核實標章已更新')
     fetchPosts()
   } catch {
     // error handled by interceptor
@@ -530,6 +597,39 @@ onMounted(fetchPosts)
           </div>
         </div>
 
+        <!-- 官方核實 -->
+        <div>
+          <h3 class="text-sm font-bold text-gray-700 mb-2 border-l-4 border-emerald-500 pl-2">
+            官方核實
+          </h3>
+          <div class="flex flex-wrap gap-2">
+            <span
+              class="rounded-full px-3 py-1 text-sm font-medium"
+              :class="
+                detailPost.landNumberVerified
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : 'bg-slate-100 text-slate-500'
+              "
+            >
+              {{ detailPost.landNumberVerified ? '已確認地號' : '未確認地號' }}
+            </span>
+            <span
+              class="rounded-full px-3 py-1 text-sm font-medium"
+              :class="
+                detailPost.authorizationLetterVerified
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : 'bg-slate-100 text-slate-500'
+              "
+            >
+              {{
+                detailPost.authorizationLetterVerified
+                  ? '已確認委託／授權書'
+                  : '未確認委託／授權書'
+              }}
+            </span>
+          </div>
+        </div>
+
         <!-- 說明與價格 -->
         <div>
           <h3 class="text-sm font-bold text-gray-700 mb-2 border-l-4 border-emerald-500 pl-2">
@@ -609,6 +709,24 @@ onMounted(fetchPosts)
           <p class="text-orange-600 whitespace-pre-wrap">{{ detailPost.reviewNote }}</p>
         </div>
 
+        <!-- 案件操作紀錄 -->
+        <div>
+          <h3 class="text-sm font-bold text-gray-700 mb-2 border-l-4 border-emerald-500 pl-2">
+            案件操作紀錄
+          </h3>
+          <div v-if="detailPost.reviewLogs?.length" class="space-y-2">
+            <div
+              v-for="log in [...(detailPost.reviewLogs ?? [])].reverse()"
+              :key="log.createdAt + '-' + log.action"
+              class="rounded border border-slate-200 p-3"
+            >
+              <p class="text-xs text-slate-500">{{ log.operator.username }}　{{ fmt(log.createdAt) }}</p>
+              <p class="mt-1 text-sm text-slate-700">{{ reviewLogText(log) }}</p>
+            </div>
+          </div>
+          <p v-else class="text-sm text-slate-400">目前尚無案件操作紀錄</p>
+        </div>
+
         <!-- 意見回覆歷史 -->
         <div>
           <h3 class="text-sm font-bold text-gray-700 mb-2 border-l-4 border-emerald-500 pl-2">
@@ -654,6 +772,14 @@ onMounted(fetchPosts)
             @click="((detailDialogVisible = false), openReviewDialog(detailPost!, 'reject'))"
           >
             駁回
+          </el-button>
+          <el-button
+            v-if="detailPost?.status === 'approved'"
+            type="primary"
+            plain
+            @click="openVerificationDialog(detailPost!)"
+          >
+            編輯核實標章
           </el-button>
           <el-button
             v-if="detailPost?.status === 'approved' || detailPost?.status === 'rejected'"
@@ -741,12 +867,40 @@ onMounted(fetchPosts)
             :placeholder="reviewAction === 'approve' ? '可選填核准備註' : '請填寫駁回原因'"
           />
         </div>
+        <div v-if="reviewAction === 'approve'" class="rounded border border-emerald-100 bg-emerald-50 p-3">
+          <p class="mb-2 text-sm font-medium text-emerald-800">官方核實標章（選填）</p>
+          <div class="flex flex-col gap-2">
+            <el-checkbox v-model="reviewLandNumberVerified">已確認地號</el-checkbox>
+            <el-checkbox v-model="reviewAuthorizationLetterVerified">
+              已確認委託／授權書
+            </el-checkbox>
+          </div>
+        </div>
       </div>
       <template #footer>
         <el-button @click="reviewDialogVisible = false">取消</el-button>
         <el-button :type="reviewAction === 'approve' ? 'success' : 'danger'" @click="submitReview">
           確認{{ reviewAction === 'approve' ? '核准' : '駁回' }}
         </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- Verification Dialog（已核准案件） -->
+    <el-dialog v-model="verificationDialogVisible" title="編輯官方核實標章" width="480px">
+      <div class="space-y-4">
+        <p class="text-gray-600">更新後不會改變案件核准狀態。</p>
+        <div class="rounded border border-emerald-100 bg-emerald-50 p-3">
+          <div class="flex flex-col gap-2">
+            <el-checkbox v-model="reviewLandNumberVerified">已確認地號</el-checkbox>
+            <el-checkbox v-model="reviewAuthorizationLetterVerified">
+              已確認委託／授權書
+            </el-checkbox>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="verificationDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitVerification">儲存</el-button>
       </template>
     </el-dialog>
 
