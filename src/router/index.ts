@@ -3,7 +3,7 @@ import Login from "../views/Login.vue";
 import Articles from "../views/Articles.vue";
 import Analytics from "../views/analytics/index.vue";
 import Members from "../views/Members.vue";
-import LandPosts from "../views/LandPosts.vue";
+import LandPosts from "../views/land-posts/index.vue";
 
 const routes = [
   { path: "/login", component: Login, name: "login" },

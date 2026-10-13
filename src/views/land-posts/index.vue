@@ -2,72 +2,11 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import dayjs from 'dayjs'
-import http from '../request/http'
-
-interface Member {
-  _id: string
-  name?: string
-  username?: string
-  email?: string
-  mobile?: string
-}
-
-interface ReviewReply {
-  content: string
-  reviewerName?: string
-  createdAt: string
-}
-
-interface ReviewLog {
-  action: 'approved' | 'rejected' | 'verification_updated'
-  operator: { userId: string; username: string }
-  before?: { landNumberVerified: boolean; authorizationLetterVerified: boolean }
-  after?: { landNumberVerified: boolean; authorizationLetterVerified: boolean }
-  createdAt: string
-}
-
-interface LandPost {
-  _id: string
-  type: string
-  landType?: string[]
-  contactName: string
-  city: string
-  district: string
-  section?: string
-  landNumbers?: string[]
-  approximateLocation?: string
-  landArea?: number
-  landAreaUnit?: string
-  landShareNumerator?: number
-  landShareDenominator?: number
-  landOwnerCount?: number
-  floorAreaRatio?: number
-  buildingCoverageRatio?: number
-  frontageWidth?: number
-  lotDepth?: number
-  roadCondition?: string
-  landCondition?: string
-  description: string
-  priceBudget?: string
-  unitPrice?: number
-  hasAuthorizationLetter?: boolean
-  directOwnerContact?: boolean
-  visibility: string
-  images?: { key: string; url: string }[]
-  contactPhone?: string
-  contactLine?: string
-  status: string
-  reviewNote?: string
-  reviewReplies?: ReviewReply[]
-  landNumberVerified?: boolean
-  authorizationLetterVerified?: boolean
-  reviewLogs?: ReviewLog[]
-  env?: string
-  userId?: Member | string | null
-  createdAt: string
-  updatedAt: string
-  lastEditedAt?: string
-}
+import http from '../../request/http'
+import LandPostEditDialog from './components/LandPostEditDialog.vue'
+import LandPostReviewLogs from './components/LandPostReviewLogs.vue'
+import { typeMap, landTypeMap, areaUnitMap, visibilityMap, statusMap } from './constants'
+import type { Member, LandPost } from './types'
 
 const posts = ref<LandPost[]>([])
 const total = ref(0)
@@ -88,6 +27,10 @@ const reviewAuthorizationLetterVerified = ref(false)
 const verificationDialogVisible = ref(false)
 const verificationTarget = ref<LandPost | null>(null)
 
+// 已核准案件內容編輯
+const editDialogVisible = ref(false)
+const editTarget = ref<LandPost | null>(null)
+
 // Reply dialog（意見回覆）
 const replyDialogVisible = ref(false)
 const replyContent = ref('')
@@ -102,46 +45,6 @@ const detailPost = ref<LandPost | null>(null)
 // Member（聯絡人）dialog
 const memberDialogVisible = ref(false)
 const memberDialogData = ref<{ member: Member | null; post: LandPost } | null>(null)
-
-const typeMap: Record<string, string> = {
-  sell: '出售',
-  rent: '出租',
-  buy: '土地購入',
-  joint_development: '合建',
-  asset_lease: '承租資產',
-  hotel_building_sale: '飯店/建物整棟出售',
-  other: '其他或複合性開發使用',
-}
-
-const landTypeMap: Record<string, string> = {
-  farmland: '農地',
-  building: '建地',
-  residential: '住宅用地',
-  commercial: '商業用地',
-  industrial: '工業用地',
-  forest: '林地',
-  slope: '山坡地',
-  road: '道路用地',
-  public_facility: '公保地',
-  other: '其他',
-}
-
-const areaUnitMap: Record<string, string> = {
-  ping: '坪',
-  sqm: '平方公尺',
-  hectare: '公頃',
-}
-
-const visibilityMap: Record<string, string> = {
-  platform_public: '公開於踏取平台',
-  internal_only: '僅內部可見',
-}
-
-const statusMap: Record<string, string> = {
-  pending: '待審核',
-  approved: '已核准',
-  rejected: '已駁回',
-}
 
 const statusTagType = (status: string) => {
   if (status === 'approved') return 'success'
@@ -184,28 +87,6 @@ const editedAfterReply = (post: LandPost) => {
 }
 
 const fmt = (d?: string) => (d ? dayjs(d).format('YYYY-MM-DD HH:mm') : '-')
-
-const verificationStateText = (verified: boolean) => (verified ? '已確認' : '未確認')
-
-const verificationChangeText = (log: ReviewLog) => {
-  const before = log.before ?? {
-    landNumberVerified: false,
-    authorizationLetterVerified: false,
-  }
-  const after = log.after ?? before
-
-  return [
-    `地號：${verificationStateText(before.landNumberVerified)} → ${verificationStateText(after.landNumberVerified)}`,
-    `委託／授權書：${verificationStateText(before.authorizationLetterVerified)} → ${verificationStateText(after.authorizationLetterVerified)}`,
-  ].join('；')
-}
-
-const reviewLogText = (log: ReviewLog) => {
-  if (log.action === 'approved') return `已核准案件：${verificationChangeText(log)}`
-  if (log.action === 'rejected') return `已駁回案件：${verificationChangeText(log)}`
-
-  return `已更新官方核實標章：${verificationChangeText(log)}`
-}
 
 const fetchPosts = async () => {
   loading.value = true
@@ -304,6 +185,17 @@ const submitVerification = async () => {
   } catch {
     // error handled by interceptor
   }
+}
+
+const openEditDialog = (post: LandPost) => {
+  editTarget.value = post
+  editDialogVisible.value = true
+}
+
+const handleEdited = (updated: LandPost) => {
+  // 詳情彈窗開著同一筆時，同步顯示最新內容與差異紀錄
+  if (detailPost.value?._id === updated._id) detailPost.value = updated
+  fetchPosts()
 }
 
 const openReplyDialog = (post: LandPost) => {
@@ -479,6 +371,15 @@ onMounted(fetchPosts)
               </template>
               <template v-else>
                 <el-button size="small" @click="showDetail(row)">詳情</el-button>
+                <el-button
+                  v-if="row.status === 'approved'"
+                  size="small"
+                  type="primary"
+                  plain
+                  @click="openEditDialog(row)"
+                >
+                  編輯
+                </el-button>
                 <el-button size="small" type="danger" plain @click="handleDelete(row)">刪除</el-button>
               </template>
             </div>
@@ -720,17 +621,7 @@ onMounted(fetchPosts)
           <h3 class="text-sm font-bold text-gray-700 mb-2 border-l-4 border-emerald-500 pl-2">
             案件操作紀錄
           </h3>
-          <div v-if="detailPost.reviewLogs?.length" class="space-y-2">
-            <div
-              v-for="log in [...(detailPost.reviewLogs ?? [])].reverse()"
-              :key="log.createdAt + '-' + log.action"
-              class="rounded border border-slate-200 p-3"
-            >
-              <p class="text-xs text-slate-500">{{ log.operator.username }}　{{ fmt(log.createdAt) }}</p>
-              <p class="mt-1 text-sm text-slate-700">{{ reviewLogText(log) }}</p>
-            </div>
-          </div>
-          <p v-else class="text-sm text-slate-400">目前尚無案件操作紀錄</p>
+          <LandPostReviewLogs :logs="detailPost.reviewLogs" />
         </div>
 
         <!-- 意見回覆歷史 -->
@@ -786,6 +677,13 @@ onMounted(fetchPosts)
             @click="openVerificationDialog(detailPost!)"
           >
             編輯核實標章
+          </el-button>
+          <el-button
+            v-if="detailPost?.status === 'approved'"
+            type="primary"
+            @click="openEditDialog(detailPost!)"
+          >
+            編輯內容
           </el-button>
           <el-button
             v-if="detailPost?.status === 'approved' || detailPost?.status === 'rejected'"
@@ -909,6 +807,13 @@ onMounted(fetchPosts)
         <el-button type="primary" @click="submitVerification">儲存</el-button>
       </template>
     </el-dialog>
+
+    <!-- Edit Dialog（已核准案件內容編輯，含差異紀錄） -->
+    <LandPostEditDialog
+      v-model:open="editDialogVisible"
+      :post="editTarget"
+      @success="handleEdited"
+    />
 
     <!-- Reply Dialog（意見回覆） -->
     <el-dialog v-model="replyDialogVisible" title="意見回覆" width="520px">
