@@ -3,8 +3,12 @@ import { ElMessage } from "element-plus";
 import router from "../router";
 import { useAuthStore } from "../store/auth";
 
+// 後端位址由 VITE_API_BASE_URL 設定；未設時打正式後端（Cloud Run 台灣）
+const DEFAULT_API_BASE_URL =
+  "https://touching-api-415964224522.asia-east1.run.app/api";
+
 const http = axios.create({
-  baseURL: "https://touching-develop.zeabur.app/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL,
   timeout: 30000,
 });
 
