@@ -75,3 +75,26 @@ export interface LandPost {
   updatedAt: string
   lastEditedAt?: string
 }
+
+export interface DeletionPerson {
+  userId?: string
+  username?: string
+  email?: string
+  name?: string
+}
+
+export interface LandPostDeletion {
+  _id: string
+  landPostId: string
+  statusAtDeletion: string
+  env: 'prod' | 'qat'
+  owner: DeletionPerson
+  actor: { role: 'member' | 'admin'; userId?: string; username?: string }
+  ip: string
+  userAgent: string
+  deletedAt: string
+  restoredAt: string | null
+  restoredBy?: { userId?: string; username?: string }
+  // 列表只帶摘要欄位；單筆 API 才有完整快照
+  snapshot: Partial<LandPost>
+}

@@ -5,6 +5,7 @@ import dayjs from 'dayjs'
 import http from '../../request/http'
 import LandPostEditDialog from './components/LandPostEditDialog.vue'
 import LandPostReviewLogs from './components/LandPostReviewLogs.vue'
+import LandPostDeletions from './components/LandPostDeletions.vue'
 import { typeMap, landTypeMap, areaUnitMap, visibilityMap, statusMap } from './constants'
 import type { Member, LandPost } from './types'
 
@@ -105,9 +106,12 @@ const fetchPosts = async () => {
   }
 }
 
+const DELETED_TAB = 'deleted'
+
 const handleTabChange = () => {
   currentPage.value = 1
-  fetchPosts()
+  // 「刪除紀錄」分頁由 LandPostDeletions 自己載入
+  if (activeTab.value !== DELETED_TAB) fetchPosts()
 }
 
 const handlePageChange = (page: number) => {
@@ -233,7 +237,7 @@ const submitReply = async () => {
 const handleDelete = async (post: LandPost) => {
   try {
     await ElMessageBox.confirm(
-      `確定要刪除「${post.contactName}」在 ${post.city}${post.district} 的投稿嗎？此操作無法復原，圖片也會一併刪除。`,
+      `確定要刪除「${post.contactName}」在 ${post.city}${post.district} 的投稿嗎？刪除後可在「刪除紀錄」分頁查詢與還原。`,
       '刪除投稿',
       { confirmButtonText: '確定刪除', cancelButtonText: '取消', type: 'warning' },
     )
@@ -272,10 +276,13 @@ onMounted(fetchPosts)
         <el-tab-pane label="已核准" name="approved" />
         <el-tab-pane label="已駁回" name="rejected" />
         <el-tab-pane label="全部" name="all" />
+        <el-tab-pane label="刪除紀錄" :name="DELETED_TAB" />
       </el-tabs>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm p-6">
+    <LandPostDeletions v-if="activeTab === DELETED_TAB" />
+
+    <div v-else class="bg-white rounded-lg shadow-sm p-6">
       <el-table
         :data="posts"
         v-loading="loading"

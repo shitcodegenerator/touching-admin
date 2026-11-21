@@ -86,3 +86,8 @@ export const formatChangeValue = (field: string, value: unknown): string => {
   }
   return map?.[String(value)] ?? String(value)
 }
+
+export const deletionActorMap: Record<string, string> = {
+  member: '會員撤回',
+  admin: '管理員刪除',
+}
