@@ -4,6 +4,7 @@ import Articles from "../views/Articles.vue";
 import Analytics from "../views/analytics/index.vue";
 import Members from "../views/Members.vue";
 import LandPosts from "../views/land-posts/index.vue";
+import SecurityEvents from "../views/security/index.vue";
 
 const routes = [
   { path: "/login", component: Login, name: "login" },
@@ -12,6 +13,7 @@ const routes = [
   { path: "/analytics", component: Analytics, name: "analytics" },
   { path: "/members", component: Members, name: "members" },
   { path: "/land-posts", component: LandPosts, name: "land-posts" },
+  { path: "/security", component: SecurityEvents, name: "security" },
 ];
 
 const router = createRouter({
