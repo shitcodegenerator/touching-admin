@@ -12,7 +12,15 @@ interface SecurityEvent {
   userAgent: string
   method: string
   path: string
-  detail: { scope?: string; count?: number; windowMinutes?: number; source?: string; field?: string }
+  detail: {
+    scope?: string
+    count?: number
+    windowMinutes?: number
+    source?: string
+    field?: string
+    suppressedType?: string
+    windowSeconds?: number
+  }
   isTest: boolean
   createdAt: string
 }
@@ -32,6 +40,10 @@ const fmt = (d: string) => dayjs(d).format('YYYY-MM-DD HH:mm:ss')
 const describe = (row: SecurityEvent) => {
   const d = row.detail || {}
   if (row.type === 'nosql_injection') return `${d.source ?? ''}.${d.field ?? ''}`
+  if (row.type === 'events_suppressed') {
+    const label = securityEventTypeMap[d.suppressedType ?? ''] || d.suppressedType
+    return `${label}：${d.windowSeconds ?? 60} 秒內有 ${d.count ?? 0} 筆超過上限未逐筆記錄`
+  }
   const scope = d.scope ? scopeMap[d.scope] || d.scope : ''
   return `${scope}｜${d.count ?? '-'} 次／${d.windowMinutes ?? '-'} 分鐘`
 }
@@ -110,7 +122,7 @@ onMounted(fetchItems)
         </el-table-column>
         <el-table-column label="類型" width="190">
           <template #default="{ row }">
-            <el-tag size="small" :type="row.type === 'nosql_injection' ? 'danger' : 'warning'" effect="plain" disable-transitions>
+            <el-tag size="small" :type="row.type === 'nosql_injection' ? 'danger' : row.type === 'events_suppressed' ? 'info' : 'warning'" effect="plain" disable-transitions>
               {{ securityEventTypeMap[row.type] || row.type }}
             </el-tag>
             <el-tag v-if="row.isTest" size="small" type="info" class="ml-1" disable-transitions>測試</el-tag>
